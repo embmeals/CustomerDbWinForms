@@ -1,0 +1,70 @@
+name: 🚀 Release Automation
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: 🏗️ Build Release Version
+      run: |
+        echo "🎯 Building version ${{ github.ref_name }}"
+        dotnet publish CustomerDbWinForms.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained true `
+          --output ./publish `
+          -p:PublishSingleFile=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -p:EnableCompressionInSingleFile=true
+
+    - name: 📦 Create Release Zip
+      run: |
+        Compress-Archive -Path ./publish/* -DestinationPath ./CustomerDbWinForms-${{ github.ref_name }}.zip
+
+    - name: 🎉 Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Customer Database ${{ github.ref_name }}
+        body: |
+          ## 🎉 Customer Database WinForms ${{ github.ref_name }}
+
+          ### ✨ What's New
+          - Bug fixes and improvements
+          - Performance optimizations
+          - Enhanced user experience
+
+          ### 📥 Download
+          - `CustomerDbWinForms-${{ github.ref_name }}.zip` - Standalone executable (no installation required!)
+
+          ### 🚀 Quick Start
+          1. Download the zip file
+          2. Extract to any folder
+          3. Run `CustomerDbWinForms.exe`
+
+          ---
+          🤖 *This release was automatically created by GitHub Actions*
+        files: |
+          CustomerDbWinForms-${{ github.ref_name }}.zip
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 📊 Generate Release Stats
+      run: |
+        $size = (Get-Item ./CustomerDbWinForms-${{ github.ref_name }}.zip).Length / 1MB
+        echo "📦 Release size: $([math]::Round($size, 2)) MB"
+        echo "🔗 Release URL: https://github.com/embmeals/CustomerDbWinForms/releases/tag/${{ github.ref_name }}"

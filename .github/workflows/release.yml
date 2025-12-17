@@ -23,7 +23,7 @@ jobs:
         echo "🎯 Building version ${{ github.ref_name }}"
         dotnet publish CustomerDbWinForms.csproj `
           --configuration Release `
-          --runtime win-x64 `
+          --runtime win-x86 `
           --self-contained true `
           --output ./publish `
           -p:PublishSingleFile=true `
